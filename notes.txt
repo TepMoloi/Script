@@ -1,0 +1,98 @@
+This command runs in folder for -
+    - Single execution
+    - No terminal window
+    - Bundles JSON UUTestFiles
+    - Entry script
+
+pyinstaller --onefile --noconsole ^
+  --add-data "LivePaths.json;." ^
+  Pointer.py
+
+
+Pointer.exe File location - C:\Users\tmoloi\Desktop\Python\Client\Script\dist - Pointer
+
+
+Updating Code -
+
+  - Make sure to delete current "dist" and "build" folders before running command
+  - Edit/Update code in vscode script
+  - Run this command in cmd location "C:\Users\tmoloi\Desktop\Python\Client\Script" for updating code script or JSON locations
+  - A new "dist" and "build" will be created upon completion
+  - Then use that new version to run the Pointer.exe inside "dist" folder
+
+
+Paths 
+  
+  Client = File recieve move to server
+  Server = File sit for manipulation
+  old = Finished processing word documents moved for deletion
+  error = Files that errored during manipulation
+
+Live Paths
+  {
+      "Server_path":"\\\\Srv604gmc\\dp\\DP_Data\\DM\\United Utilities\\Precomposed",
+      "Client_path" :"\\\\Srv604gmc\\dp\\DP_Data\\DM\\United Utilities\\Precomposed\\Tep",
+      "old_path":"\\\\Srv604gmc\\dp\\DP_Data\\DM\\United Utilities\\Precomposed\\Old",
+      "Error_path":"\\\\Srv604gmc\\dp\\DP_Data\\DM\\United Utilities\\Precomposed\\Tep\\Tep2"
+      "Input_path":"\\\\srv604gmc\\DP\\DP_Data\\DM\\AutomatedDM\\LIVE\\Input"
+  }
+
+Local Machine Test Paths
+{
+    "Server_path":"C:\\Users\\tmoloi\\Desktop\\Python\\Server",
+    "Client_path" :"C:\\Users\\tmoloi\\Desktop\\Python\\Client",
+    "old_path":"C:\\Users\\tmoloi\\Desktop\\Python\\Server\\Old",
+    "Error_path":"C:\\Users\\tmoloi\\Desktop\\Python\\Server\\ErrorFiles",
+    "Input_path":"C:\\Users\\tmoloi\\Desktop\\Python\\Input"
+} 
+
+
+Test files
+  {
+      "Simplex":"C:\\Users\\tmoloi\\Desktop\\Python\\Client\\UUTestFiles\\AutoUU_Simplex.docx",
+      "Duplex_2":"C:\\Users\\tmoloi\\Desktop\\Python\\Client\\UUTestFiles\\AutoUU_Duplex_2.docx",
+      "Duplex_3":"C:\\Users\\tmoloi\\Desktop\\Python\\Client\\UUTestFiles\\AutoUU_Duplex_3.docx",
+      "Duplex_4":"C:\\Users\\tmoloi\\Desktop\\Python\\Client\\UUTestFiles\\AutoUU_Duplex_4.docx",
+  }
+    
+
+
+race conditions issue:
+   Errors:
+    List index out of range
+    Object has been deleted
+
+I still don't have the solution for this problem yet
+
+How to fix this race condition:
+  Error was due to the global variables being overwritten and used 
+  at same time by the threads when running concurrent files. This 
+  made it so that sometimes it would delete the active word file in
+  use as they were overwritting eachother so one file would be deleted
+  whilst it was still meant to be in use. This caused other issues but
+  I have now solved it.
+  To fix this issue I removed my globals and made sure to pass everything
+  through each module manually instead of using globals and calling them.
+  This ensured that for each thread it remains inside its own variables
+  and avoids any crossovers or overwrites which were causing issues and
+  deleting files etc.
+
+My next solve:
+  The next thing i want to make more efficient is the speed of process
+  It currently processes 5 files at a time however if a word document
+  has over 300 pages it runs significantly slower despite the code 
+  supposed to call off atfter only 3 records found. I think this can
+  be made faster by adhusting the logic of how its processing page by
+  page. 
+  It currently itirates line by line despite already finding the address
+  within the first 4 lines (if its a record page). The next step I need 
+  it to do is to only itirate through the top 4/5 lines and if a record 
+  is found to jump to next page and count record. If a record is not found
+  within the top 4 lines then jump to next page and +1 for the type of record
+  it is. 
+  After finding 3 records it should exit as the pattern has now been found. 
+  This should run significantly quicker then the way that it is which tells 
+  me the files are being processed differently and not in the way they should
+  be ran. 
+  If i can get this fix then I can get the files to process much quicker which
+  saves company time and improves efficiency as a whole.

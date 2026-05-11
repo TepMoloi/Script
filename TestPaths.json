@@ -1,0 +1,10 @@
+
+{
+    "Server_path":"C:\\Users\\tmoloi\\Desktop\\Python\\Server",
+    "Client_path" :"C:\\Users\\tmoloi\\Desktop\\Python\\Client",
+    "old_path":"C:\\Users\\tmoloi\\Desktop\\Python\\Server\\Old",
+    "Error_path":"C:\\Users\\tmoloi\\Desktop\\Python\\Server\\ErrorFiles",
+    "Input_path":"C:\\Users\\tmoloi\\Desktop\\Python\\Server\\Input",
+    "Script_path":"C:\\Users\\tmoloi\\Desktop\\Python\\Client\\Script",
+    "Dashboard_path":"C:\\Users\\tmoloi\\Desktop\\Python\\Live Dashboard\\JSON"
+} 

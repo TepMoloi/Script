@@ -1,0 +1,24 @@
+System Architecture 
+
+Network Client Folder (Prod)
+    - Docx file arrival from account manager
+    Pointer.py 
+        - watchdog observer, thread per file, semaphore max 5
+        - detect incoming docx files from Prod
+        - move detected files to precomposed
+        WinNotify.py
+            - win11toast, toast alerts
+            - notifies user on all events
+            AutoUUScript.py
+                - Address Validation --> Simplex/Duplex Type detection --> PDF convert & route
+                - threading lock
+            Dataload.py
+                - Processed files, Processing Queue, Error Files, Activity log
+                - writes .JSON files
+                - stage updates of each file 
+                Monitoring Dashboard
+                - HTML/CSS/JS 
+                - IIS Deployment
+                - User Interface
+                - Displays file updates, 
+                
