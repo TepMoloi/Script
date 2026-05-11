@@ -78,26 +78,13 @@ def CompletedStage(latest_file, dashboard_path, dataframe, reference_id=None):
 
 
 def push2(json_path, frame):
-    """
-    Updates an existing record in the JSON file matched by Filename.
-    If no matching record is found, appends a new one.
 
-    FIX 1: Now matches by Filename instead of by list position (procfiles[-1]).
-            Previously, two concurrent threads would both update the last record
-            in the list, meaning the wrong file's entry would be overwritten.
-
-    FIX 2: The entire read-modify-write is wrapped in _json_lock so only one
-            thread can access the file at a time. Without this, two threads
-            could read the same list simultaneously and one would silently
-            discard the other's write.
-    """
     record = frame.to_dict(orient="records")[0]
     target_filename = record.get("Filename")
 
     with _json_lock:
         procfiles = _read_json(json_path)
 
-        # FIX: Find the record by Filename, not by position
         matched = False
         for existing in procfiles:
             if existing.get("Filename") == target_filename:
@@ -114,12 +101,7 @@ def push2(json_path, frame):
 
 
 def push(json_path, frame):
-    """
-    Appends a new record to the JSON file.
 
-    FIX: Wrapped in _json_lock so concurrent threads cannot read and write
-         the file simultaneously, which was causing records to be lost.
-    """
     with _json_lock:
         procfiles = _read_json(json_path)
         procfiles.append(frame.to_dict(orient="records")[0])

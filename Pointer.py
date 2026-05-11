@@ -102,10 +102,6 @@ if __name__ == "__main__":
 
     def process_file_thread(file_path):
         global processing_files
-        # pcdpath = DataLoad.datadict(os.path.basename(file_path), "Queued", times)
-        # procframe = pd.DataFrame(pcdpath)
-        # procjson_path = os.path.join(Dashboard_path, "ProccessingQueue.json")
-
         DataLoad.ProcessingStage(file_path, Dashboard_path)
         try:
             processing_files.add(file_path)
@@ -129,9 +125,7 @@ if __name__ == "__main__":
                     filelist.remove(f)  # remove file before processing
                     processing_files.add(f)
                     t = threading.Thread(target=process_file_thread, args=(f,))
-                    # t2 = threading.Thread(target=process_file_thread, args=(f,))
                     t.start()
-                    # t2.start()
             time.sleep(0.5)
 
     except KeyboardInterrupt:

@@ -168,9 +168,9 @@ def word_process(doc_path, start_time, file_index=0, reference_id=None):
         # Any unexpected crash anywhere in the pipeline lands here
         print(f"Pipeline error for {os.path.basename(doc_path)}: {e}")
         DataLoad.JLog(doc_path, dashboard_path, f"Pipeline Error - {e}")
-        if e == "Destination path {} already exists":
-                print("File with same name already exists in destination. Moving to errors.")
-        print(doc_path)
+        # if e == f"- Destination path {doc_path} already exists":
+        #         print("File with same name already exists in destination. Moving to errors.")
+        # print(doc_path)
         shutil.move(doc_path, errors)
         DataLoad.ErrorStage(doc_path, dashboard_path, reference_id)
         WinNotify.errorNotification(doc_path)

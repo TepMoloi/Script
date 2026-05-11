@@ -17,8 +17,15 @@ Network Client Folder (Prod)
                 - writes .JSON files
                 - stage updates of each file 
                 Monitoring Dashboard
-                - HTML/CSS/JS 
-                - IIS Deployment
-                - User Interface
-                - Displays file updates, 
+                    - HTML/CSS/JS 
+                    - IIS Deployment
+                    - User Interface
+                    - Displays file updates, file errors, and currently running files
+    
+                Output PDF 
+                    - moved to production input Folder
+                Original .docx
+                    - moved to archive/old after successful pdf Output
+                
+Packacged as Pointer.exe via PyInstaller
                 

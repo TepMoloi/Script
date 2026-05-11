@@ -64,7 +64,7 @@ race conditions issue:
 
 I still don't have the solution for this problem yet
 
-How to fix this race condition:
+How i fixed the race condition:
   Error was due to the global variables being overwritten and used 
   at same time by the threads when running concurrent files. This 
   made it so that sometimes it would delete the active word file in
@@ -82,7 +82,7 @@ My next solve:
   It currently processes 5 files at a time however if a word document
   has over 300 pages it runs significantly slower despite the code 
   supposed to call off atfter only 3 records found. I think this can
-  be made faster by adhusting the logic of how its processing page by
+  be made faster by adjusting the logic of how its processing page by
   page. 
   It currently itirates line by line despite already finding the address
   within the first 4 lines (if its a record page). The next step I need 
