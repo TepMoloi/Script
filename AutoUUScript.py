@@ -6,10 +6,12 @@
 # if those words are used anywhere else in the document they will NOT be compared. 
 # if there are different words on the line they WILL be compared and the program will NOT continue
 
+from pydoc import doc
 import subprocess
 from docx import Document
 import win32com.client as win32 # this for accurate page counting
 import json
+import Pointer
 import WinNotify
 import os
 import shutil
@@ -19,7 +21,7 @@ import sys
 import threading
 import DataLoad
 import uuid
-
+from docx.oxml.ns import qn
 
 # function to get resource path for json file - non hard coded file paths
 def resource_path(filename):
@@ -29,7 +31,7 @@ def resource_path(filename):
 
 
 # load live paths from json file
-with open(resource_path("TestPaths.json")) as json_paths:
+with open(resource_path("LivePaths.json")) as json_paths:
     PATH = json.load(json_paths)
 Srv_path = format(PATH["Server_path"])
 Client_path = format(PATH["Client_path"])
@@ -43,13 +45,14 @@ json_filename = "AutoUU_Processed_Files.json"
 json_path = os.path.join(dashboard_path, json_filename)
 
 # Limit concurrent Word instances (tune for your machine)
-MAX_WORD_INSTANCES = 5
+MAX_WORD_INSTANCES = 10
 word_open_semaphore = threading.Semaphore(MAX_WORD_INSTANCES)
 
+errdfiles = set() # track files that errored
+pcsed = set() # track files that processed successfully
+
 # -------------------------------------------------------------------------------
-# FIX: Removed global start_time, global doc, global WordID_selected entirely.
-# These are now local variables created per-call and passed between functions.
-# This means each thread has its own isolated copy and cannot overwrite another
+# each thread has its own isolated copy and cannot overwrite another
 # thread's values, which was the root cause of the race condition.
 # -------------------------------------------------------------------------------
 
@@ -79,29 +82,28 @@ def main(latest_file=None, file_index=0):
         Match = (record == lookfor)
 
         if not Match:
-            print(f"No address match up. \nFile moved to errors, waiting for next file...")
+            print(f"No address match up. File moved to errors")
             shutil.move(doc_path, errors)
             DataLoad.ErrorStage(doc_path, dashboard_path, reference_id)
-            WinNotify.errorNotification(doc_path)
+            WinNotify.errorNotification(doc_path, "No address match - Check formatting")
+            errdfiles.add(doc_path)
             return
-
+        
+        
+    # print("Address Match Passed") - reducing console clutter
     DataLoad.JLog(doc_path, dashboard_path, "Address Match Passed")
-
-    # FIX: Pass start_time into word_process so it stays local to this thread
+    
     word_process(doc_path, start_time, file_index, reference_id)
-
+    # return
 
 def word_process(doc_path, start_time, file_index=0, reference_id=None):
-    # FIX: doc and WordID_selected are now local variables in this function.
-    # They are passed forward to production() explicitly instead of via globals.
-    # This means two threads can each have their own doc and WordID_selected
-    # without either one overwriting the other.
+
     record_pages = set()
     seen_pages = set()
 
-    print("Data1")
+    # print("Data1") - reducing console clutter
     DataLoad.Queue(doc_path, dashboard_path, reference_id)
-    print("Data2")
+    # print("Data2") - reducing console clutter
 
     doc = None
     word_id_selected = None  # FIX: renamed and made local
@@ -123,8 +125,7 @@ def word_process(doc_path, start_time, file_index=0, reference_id=None):
             word_id_selected = x[file_index]
         else:
             word_id_selected = x[0] if x else None
-        print(f"Word Process ID for file index {file_index}: {word_id_selected}")
-
+        # print(f"Word Process ID for file index {file_index}: {word_id_selected}") - reducing console clutter
 
 # ------ Cache error delete cache and retry word open ---- #
     except Exception as e:
@@ -136,44 +137,40 @@ def word_process(doc_path, start_time, file_index=0, reference_id=None):
 
 # wrap process in pipeline try except to catch any craches and log them to dashbaord #
     try:
-        print("Data3")
+        # print("Data3") - reducing console clutter
         with word_open_semaphore:
             print("Opening Word Document")
             word.Visible = False
             # FIX: doc is now a local variable assigned here and passed forward
             doc = word.Documents.Open(doc_path)
-            print("Open")
+            # print("Open") - reducing console clutter
             DataLoad.JLog(doc_path, dashboard_path, "Logic running")
             DataLoad.ProcessingStage(doc_path, dashboard_path, reference_id)
             page_count = doc.ComputeStatistics(2)
 
-            for i in range(1, doc.Paragraphs.Count + 1):
-                para = doc.Paragraphs(i)
-                page_num = para.Range.Information(3)
-                if page_num not in seen_pages:
-                    word.Selection.GoTo(What=1, Which=2)
-                    seen_pages.add(page_num)
-                    if para.Range.Text.strip() == "United Utilities":
-                        record_pages.add(page_num)
-                        word.Selection.GoTo(What=1, Which=2)
-                        print(len(record_pages))
+            print("secStarting")   
+
+            if len(doc.sections) >= 1:
+                para = doc.Paragraphs(1)  # Check the first paragraph for the address
+                for i in range(1, doc.Sections.Count + 1):
+                    section = doc.Sections(i)
+                    if para.Range.Text.strip() == "United Utilities": # for test data use - "Sample 2"
+                        page_number = section.Range.Information(3)
+                        record_pages.add(page_number)
+                        print(f"Section break page number: {page_number}")
+                        print(record_pages)
                         if len(record_pages) == 3:
                             break
-
-        DataLoad.JLog(doc_path, dashboard_path, "Logic Check Passed")
-        print("Data4")
-        gap(record_pages, doc_path, word, doc, word_id_selected, start_time, page_count, reference_id)
+            print("secComplete")   
 
     except Exception as e:
         # Any unexpected crash anywhere in the pipeline lands here
         print(f"Pipeline error for {os.path.basename(doc_path)}: {e}")
         DataLoad.JLog(doc_path, dashboard_path, f"Pipeline Error - {e}")
-        # if e == f"- Destination path {doc_path} already exists":
-        #         print("File with same name already exists in destination. Moving to errors.")
-        # print(doc_path)
-        shutil.move(doc_path, errors)
+        
         DataLoad.ErrorStage(doc_path, dashboard_path, reference_id)
-        WinNotify.errorNotification(doc_path)
+        errdfiles.add(doc_path)
+        WinNotify.errorNotification(doc_path, "Pipeline Error - Check formatting")
 
         # Clean up Word if it was opened before the crash
         try:
@@ -181,25 +178,33 @@ def word_process(doc_path, start_time, file_index=0, reference_id=None):
                 doc.Close(SaveChanges=0)
             if word is not None:
                 word.Quit()
-            if word_id_selected is not None:
-                os.system(f"taskkill /pid {word_id_selected} /f")
+                word.Quit()  # Ensure full cleanup of Word instance
+            shutil.move(doc_path, errors)
         except Exception as cleanup_error:
             print(f"Cleanup error: {cleanup_error}")
+
+
+    DataLoad.JLog(doc_path, dashboard_path, "Logic Check Passed")
+    print("Data4")
+    gap(record_pages, doc_path, word, doc, word_id_selected, start_time, page_count, reference_id)
+
+    # return
 
 
 def gap(record_pages, latest_file, word, doc, word_id_selected, start_time, page_count, reference_id=None):
     """Calculates the gap between record page numbers to determine Simplex/Duplex"""
 
     print(f"{page_count} pages in the document")
+    print(len(record_pages))
 
     if len(record_pages) == 1:
         print("1 Record Found")
         gapnum = 1
         full_record_amount = len(record_pages)
         output(gapnum, latest_file, word, doc, word_id_selected, start_time, full_record_amount, page_count, reference_id)
-        return  
-
-    elif len(record_pages) == 2:
+        return
+        
+    if len(record_pages) == 2:
         print("2 Records Found")
         sorted_numbers = sorted(record_pages)
         gapnum = sorted_numbers[1] - sorted_numbers[0]
@@ -207,26 +212,45 @@ def gap(record_pages, latest_file, word, doc, word_id_selected, start_time, page
             gapnum = 1
         full_record_amount = 2
         output(gapnum, latest_file, word, doc, word_id_selected, start_time, full_record_amount, page_count, reference_id)
-        return  
+        return
+        
 
-    print(f"First 3 records page numbers: {sorted(record_pages)}")
+    
+    print(f"First 3 record page numbers: {sorted(record_pages)}")
 
     # For 3 or more records
     sorted_numbers = sorted(record_pages)
     gapz = [sorted_numbers[i+1] - sorted_numbers[i] for i in range(len(sorted_numbers) - 1)]
-    gapnum = int(gapz[0])
+    print(gapz)
+    if gapz is None or len(gapz) == 0:
+        gapz = [1]  # Default to 1 if no gaps found, to prevent errors in output function
+    else:
+        gapnum = int(gapz[0])
+    print(gapz)
     opr_amount = page_count / gapnum
     full_record_amount = int(opr_amount)
     print(f"Records in File: {full_record_amount}")
     output(gapnum, latest_file, word, doc, word_id_selected, start_time, full_record_amount, page_count, reference_id)
+    # return
 
 
 def output(gapnum, latest_file, word, doc, word_id_selected, start_time, full_record_amount, page_count, reference_id=None):
 
-    if page_count > gapnum:
-        print("More")
-    if gapnum < 2:
-        print("Less")
+    # failsafe if the records are not divisible by the page count
+    if page_count % gapnum != 0:
+        print("Page count is not divisible by gap between records. Check document formatting.")
+        DataLoad.JLog(latest_file, dashboard_path, "Page count not divisible by gap - [Check formatting]")
+        print("error notification")
+        WinNotify.errorNotification(latest_file, "Page count not divisible by gap - [Check formatting]")       
+        doc.Close()
+        word.Quit()    # KEEP BOTH IN
+        word.Quit() 
+        # THE FIRST QUIT DOES NOT CLOSE IT, IT JUST ENDS THE WORD INSTANCE, 
+        # THE SECOND QUIT ENSURES IT FULLY CLOSES AND RELEASES THE FILE LOCK
+        shutil.move(latest_file, errors)
+        errdfiles.add(latest_file)
+        DataLoad.ErrorStage(latest_file, dashboard_path, reference_id)
+        return
 
     print(f"Gap between numbers: {gapnum}")
 
@@ -262,11 +286,11 @@ def output(gapnum, latest_file, word, doc, word_id_selected, start_time, full_re
             return
     print(type)
     DataLoad.JLog(latest_file, dashboard_path, "Type Identified")
-    production(latest_file, word, doc, word_id_selected, start_time, full_record_amount, type, page_count, reference_id)
-    return
+    production(latest_file, word, doc, start_time, full_record_amount, type, page_count, reference_id)
+    # return
 
 
-def production(latest_file, word, doc, word_id_selected, start_time, full_record_amount, type, page_count, reference_id=None):
+def production(latest_file, word, doc, start_time, full_record_amount, type, page_count, reference_id=None):
 
     processing_json_path = os.path.join(dashboard_path, "ProccessingQueue.json")
     timestamp = time.strftime("%H:%M:%S", time.localtime())
@@ -279,7 +303,7 @@ def production(latest_file, word, doc, word_id_selected, start_time, full_record
     except Exception as e:
         DataLoad.JLog(latest_file, dashboard_path, f"Error during PDF output stage: {e}")
         shutil.move(latest_file, errors)
-
+        errdfiles.add(latest_file)
         DataLoad.ErrorStage(latest_file, dashboard_path, reference_id)
         print(f"Error during PDF output processing: {e}")
 
@@ -288,6 +312,7 @@ def production(latest_file, word, doc, word_id_selected, start_time, full_record
     pdfname = (f"{basename}~#{full_record_amount}~#{type}")
     print(f"PDF Filename - {pdfname}")
     pathtosave = (f"{Srv_path}\\{pdfname}.pdf")
+    existing_file = (f"{input_path}\\{pdfname}.pdf")
 
     try:
         doc.ExportAsFixedFormat(pathtosave, 17)
@@ -297,20 +322,30 @@ def production(latest_file, word, doc, word_id_selected, start_time, full_record
     try:
         doc.Close(SaveChanges=0)
         word.Quit()
-        print("Closed Word Document 1")
+        print("Closed Word Document")
     except Exception as e:
         print(f"Error closing Word application: {e}")
 
-    try:
-        os.system(f"taskkill /pid {word_id_selected} /f")  # FIX: uses local word_id_selected
-    except Exception as e:
-        print(f"Error killing Word process: {e}")
-    print("Killed Word Process")
 
-    time.sleep(5)
+    print("moving")
+    if os.path.exists(existing_file):
+        print(f"File {pdfname}.pdf already exists in input")
+    else:
+        try:
+            linkpath = shutil.move(pathtosave, input_path)
+        except Exception as e:
+            print(f"Error moving file: {e}")
 
-    linkpath = shutil.move(pathtosave, input_path)
-    shutil.move(latest_file, old)
+    old_file = os.path.join(old, os.path.basename(latest_file))
+    if os.path.exists(old_file):
+        print(f"File {os.path.basename(latest_file)} already exists in old")
+    else:
+        try:     
+            shutil.move(latest_file, old)
+        except Exception as e:
+            print(f"Error moving file to old: {e}")
+                
+    
 
     End_time = time.strftime("%H:%M:%S", time.localtime())
     print(f"End Time - {End_time}")
@@ -330,22 +365,24 @@ def production(latest_file, word, doc, word_id_selected, start_time, full_record
     }
     df = pd.DataFrame(dataframe)
 
+    print("finalizing")
+
     try:
         DataLoad.push2(processing_json_path, df)
+        print("push2")
         DataLoad.JobDisplay(df, json_path)
+        print("Job Display")
         WinNotify.run(type, pdfname, file_path=linkpath, latest_file=latest_file)
+        print("notification")
         DataLoad.JLog(latest_file, dashboard_path, "Completed")
+        print("JLog")
     except Exception as e:
         DataLoad.JLog(latest_file, dashboard_path, f"Error during final processing steps: {e}")
         shutil.move(latest_file, errors)
+        errdfiles.add(latest_file)
         DataLoad.ErrorStage(latest_file, dashboard_path, reference_id)
         print(f"Error during final processing steps: {e}")
 
-    return
-
-
-
-
-# program starts in pointer
-if __name__ == "__main__":
-    main()
+    # pcsed.add(latest_file)
+    # return
+    print("hellossfworld")

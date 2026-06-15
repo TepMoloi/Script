@@ -3,8 +3,14 @@ from win11toast import toast
 from pathlib import Path
 import os
 import contextlib
+import win32com.client
+import time
+
+cnt = 0
+todaysCount = 0
 
 def run(type, pdfname, file_path=None, latest_file=None): #latest file = original file 
+    return
     try:
         message = f"Processed: {pdfname} \n{type}"
         if latest_file:
@@ -21,6 +27,7 @@ def run(type, pdfname, file_path=None, latest_file=None): #latest file = origina
             toast("Task Completed",
                 message,
                 duration="short",
+                icon="C:\\Users\\tmoloi\\Desktop\\Python\\Client\\Script\\dist\\649467.ico",
                 button=button)
     except Exception as e:
         print(f"Error showing notification: {e}")
@@ -34,7 +41,8 @@ def startNotification():
         with contextlib.redirect_stdout(open(os.devnull, "w")), contextlib.redirect_stderr(open(os.devnull, "w")):  # suppress console output for notifications
             toast("Auto UU Files Recieved",
                 message,
-                duration="short")
+                duration="short",
+                icon= "C:\\Users\\tmoloi\\Desktop\\Python\\Client\\Script\\dist\\whitet3p2334.ico")
     except Exception as e:
         print(f"Error displaying notification: {e}")
     return
@@ -48,16 +56,18 @@ def observerRunning():
         with contextlib.redirect_stdout(open(os.devnull, "w")), contextlib.redirect_stderr(open(os.devnull, "w")): # suppress console output for notifications
             toast("Auto UU Observer",
                 message,
-                duration="short")
+                duration="short",
+                icon= "C:\\Users\\tmoloi\\Desktop\\Python\\Client\\Script\\dist\\whitet3p2334.ico")
     except Exception as e:
         print(f"Error displaying notification: {e}")
     return
 
 
 # error notification for no address match
-def errorNotification(doc_path):
+def errorNotification(doc_path, message1):
+    return
     try:
-        message = f"Error - No Address Match for file {os.path.basename(doc_path)}"
+        message = f"Error: {message1}"
         button = None
         file_uri = Path(doc_path).resolve().as_uri()
         button = {
@@ -69,7 +79,26 @@ def errorNotification(doc_path):
             toast("Auto UU File Error",
                 message,
                 duration="short",
-                button=button)
+                button=button,
+                icon= "C:\\Users\\tmoloi\\Desktop\\Python\\Client\\Script\\dist\\sign-red-error-icon-1.ico")
     except Exception as e:
         print(f"Error showing notification: {e}")
     return
+
+def CompletedNotificaiton(counter, pcsed_count, errdfiles_count):
+
+    global cnt, todaysCount
+    cnt += 1
+    todaysCount += counter
+
+    try:
+        message = f"{todaysCount} file(s) have been processed today \n {counter} just processed \n{pcsed_count} Passed \n {errdfiles_count} Failed"
+        with contextlib.redirect_stdout(open(os.devnull, "w")), contextlib.redirect_stderr(open(os.devnull, "w")): # suppress console output for notifications
+            toast("Auto UU Files Processed",
+                message,
+                duration="short",
+                icon= "C:\\Users\\tmoloi\\Desktop\\Python\\Client\\Script\\dist\\whitet3p2334.ico")
+    except Exception as e:
+            print(f"Error showing notification: {e}")
+    return
+

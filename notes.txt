@@ -11,7 +11,6 @@ pyinstaller --onefile --noconsole ^
 
 Pointer.exe File location - C:\Users\tmoloi\Desktop\Python\Client\Script\dist - Pointer
 
-
 Updating Code -
 
   - Make sure to delete current "dist" and "build" folders before running command
@@ -66,7 +65,7 @@ I still don't have the solution for this problem yet
 
 How i fixed the race condition:
   Error was due to the global variables being overwritten and used 
-  at same time by the threads when running concurrent files. This 
+  at same time by the threads when running concurrent files. This
   made it so that sometimes it would delete the active word file in
   use as they were overwritting eachother so one file would be deleted
   whilst it was still meant to be in use. This caused other issues but
@@ -96,3 +95,58 @@ My next solve:
   be ran. 
   If i can get this fix then I can get the files to process much quicker which
   saves company time and improves efficiency as a whole.
+
+new problem -
+  After file is processed and file type is being obtained, I created a failsafe
+  to check if the page count is divisible by the gap between records. This makes
+  sure that it will be displaying the correct amount for both variables. if it not
+  divisible it cannot be correct so it should be moved to errors for a formatting 
+  review. 
+  Problem is i can't move the file to errors without closing the document first as
+  it still in use. When closing the document using 
+  - doc.Close(SaveChanges=0) - word.Quit()
+  nothing happens it just passes through as does not close them.
+  When using 
+  - os.system(f"taskill /pid {word_id_selected} /f") 
+  the timeout period expires and does not close the document through task manager
+  The syntax is correct and the logic is correct so im unsure as to why its struggling
+  to complete this. 
+
+Fixed the issue above -
+  Upon debugging i found out that the initial doc.Close() and word.Quit() 
+  it wouldn't close the document but it would move it from backgorund processes to apps
+  in task manager. 
+  So I repeated the word.Quit() and it closed it perfectly and quickly then shutil.move
+  the file to errors causing no issues. 
+  When you try to use doc.Close() the second time then it throws a pipeline error. I think
+  what happens is that the initial doc.Close closes out the document processing and releases 
+  it back to the word import thats being used. Then the first word.Quit() pulls it from 
+  background processes and the second word.Quit() fully closes it down which also kills it 
+  in task manager. 
+  My thought process now is to make sure this problem doesn't potentially occur elsewhere and
+  to adjust the closing process on the different sections to cover this fail from happening.
+
+Change User Notification Process - 
+  I'm thinking to remove slight delay from the process. I want to change the way the user receives
+  the notifications. Currently they recieve an update on every file that gets processed weather 
+  it has errored or completed. They also recieve an update notifcation when files have arrived and 
+  when the pointer tool starts running.
+  I want to keep the notification to display the pointer tool is running. But i'm going to remove
+  the update notifcations as for each update it gives a 3-5 second delay for each file that gets 
+  processed. 
+  Instead I will replace this with 1 notification that gets sent to them only IF files have arrived
+  within each every last 30 minutes whilst the pointer is on. In this notification it will display 
+  how many files have completed processing, how many files have errored in processing and how many
+  files have arrived within the last 30 minutes. It will also display all the filenames in the see 
+  more section. 
+  I need to think about how to include the other details to still be able to match the mrdf and 
+  wavesheets so when sending to account manager there is no confusing. I will have to either add
+  logic to find which matching mrdf is with each file. OR i can do something else but im unsure
+  yet i just need to think about it for a little bit.
+
+  This isn't important so dont respond now - im just wondering, if you built a script in whatever
+  language. you have a file that gets picked up using an observer and is moved for processing.
+  That file passes through multiple modules and works correct causing no issues. It reaches its
+  last point which moves the file to the correct locations and then the script returns back to
+  the observer to wait for another file to be dropped. But for some reason the script tries 
+  running again thinking it still has the file and then causes an exception
