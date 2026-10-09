@@ -1,3 +1,7 @@
+Current Version 3.0 
+
+1000 record process time = < 6 minutes
+
 This command runs in folder for -
     - Single execution
     - No terminal window
@@ -53,7 +57,7 @@ Test files
       "Duplex_3":"C:\\Users\\tmoloi\\Desktop\\Python\\Client\\UUTestFiles\\AutoUU_Duplex_3.docx",
       "Duplex_4":"C:\\Users\\tmoloi\\Desktop\\Python\\Client\\UUTestFiles\\AutoUU_Duplex_4.docx",
   }
-    
+
 
 
 race conditions issue:
@@ -144,9 +148,9 @@ Change User Notification Process -
   logic to find which matching mrdf is with each file. OR i can do something else but im unsure
   yet i just need to think about it for a little bit.
 
-  This isn't important so dont respond now - im just wondering, if you built a script in whatever
-  language. you have a file that gets picked up using an observer and is moved for processing.
-  That file passes through multiple modules and works correct causing no issues. It reaches its
-  last point which moves the file to the correct locations and then the script returns back to
-  the observer to wait for another file to be dropped. But for some reason the script tries 
-  running again thinking it still has the file and then causes an exception
+Grab MRDFs and Wavesheet csv -
+  The next section to make it more automated is for it to be able to pick up the matching mrdf file
+  for each file that gets processed and then once all files have landed in the proofs folder, get 
+  the wavesheet file that gets generated as a csv. Have to make it accurate to be able to grab the
+  matching mrdf file specific to the file just processed. Due to the threading processing randomly
+  I can't trust picking them up by recency however that does s

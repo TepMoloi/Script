@@ -13,7 +13,7 @@ Network Client Folder (Prod)
                 - Address Validation --> Simplex/Duplex Type detection --> PDF convert & route
                 - threading lock
             Dataload.py
-                - Processed files, Processing Queue, Error Files, Activity log
+                - Send information to --> Processed files, Processing Queue, Error Files, Activity log
                 - writes .JSON files
                 - stage updates of each file 
                 Monitoring Dashboard

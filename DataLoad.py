@@ -123,6 +123,11 @@ def JLog(file, dashboard_path, type):
             print(f"Error writing to log: {e}")
     return
 
+# im confused as to what's happening with the number counts. It is only sending one email and
+# only displays the initial files dropped. In the count displaying how many have processed
+# it's displaying wrong and i'm trying to find how it's getting the calculation that it is
+# this shouldn't be a major problem as the logic works perfect but in terms of the email
+# sending and information. it is wrong and needs to be adjusted accordingly. 
 
 # -------------------------------------------------------------------------------
 # Private helpers — shared read/write logic used by push and push2

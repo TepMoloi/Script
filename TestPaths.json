@@ -6,5 +6,9 @@
     "Error_path":"C:\\Users\\tmoloi\\Desktop\\Python\\Server\\ErrorFiles",
     "Input_path":"C:\\Users\\tmoloi\\Desktop\\Python\\Server\\Input",
     "Script_path":"C:\\Users\\tmoloi\\Desktop\\Python\\Client\\Script",
-    "Dashboard_path":"C:\\Users\\tmoloi\\Desktop\\Python\\Live Dashboard\\JSON"
+    "Dashboard_path":"C:\\Users\\tmoloi\\Desktop\\Python\\Live Dashboard\\JSON",
+    "Output_path": "C:\\Users\\tmoloi\\Desktop\\Python\\Server\\Output",
+    "Proofs_path":"C:\\Users\\tmoloi\\Desktop\\Python\\Server\\proofs",
+    "MRDF_path":"C:\\Users\\tmoloi\\Desktop\\Python\\Server\\mrdf",
+    "Wavesheet_path":"C:\\Users\\tmoloi\\Desktop\\Python\\Server\\wavesheet"
 } 

@@ -7,6 +7,10 @@
     "Error_path":"\\\\Srv604gmc\\dp\\DP_Data\\DM\\United Utilities\\Precomposed\\Tep\\TepError",
     "Input_path":"\\\\srv604gmc\\DP\\DP_Data\\DM\\AutomatedDM\\LIVE\\Input",
     "Script_path":"C:\\Users\\tmoloi\\Desktop\\Python\\Client\\Script",
-    "Dashboard_path":"C:\\Users\\tmoloi\\Desktop\\Python\\Live Dashboard\\JSON"
+    "Dashboard_path":"C:\\Users\\tmoloi\\Desktop\\Python\\Live Dashboard\\JSON",
+    "Output_path":"\\\\srv604gmc\\DP\\DP_Data\\DM\\AutomatedDM\\LIVE\\Output",
+    "Proofs_path":"\\\\WA-Fileserver\\MBA\\_Client\\United Utilities\\CLIENT PROOFING\\DIRECT MAIL",
+    "MRDF_path":"\\\\srv604gmc\\DP\\DP_Data\\DM\\AutomatedDM\\LIVE\\MRDF",
+    "Wavesheet_path":"\\\\srv604gmc\\DP\\DP_Data\\DM\\AutomatedDM\\LIVE\\WavesheetLogs"
 } 
 
